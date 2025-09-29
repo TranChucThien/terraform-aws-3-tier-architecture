@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   backend:
-    image: chucthien03/three-tier-be:latest
+    image: chucthien03/three-tier-backend:latest
     container_name: fastapi_backend
     restart: always
     ports:

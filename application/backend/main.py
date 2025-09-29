@@ -3,8 +3,17 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pymongo import MongoClient
 from bson import ObjectId
-
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
+
+# Cấu hình CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Cho phép tất cả frontend gọi
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Lấy config từ environment variable
 MONGO_USER = os.getenv("MONGO_USER", "root")
