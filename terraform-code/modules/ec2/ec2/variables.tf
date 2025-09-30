@@ -122,3 +122,20 @@ variable "user_data" {
   default     = null # You can provide a default user data script here if needed
 
 }
+
+# variable "user_data" {
+#   description = "User data script to initialize the EC2 instance"
+#   type        = string
+#   default     = <<-EOF
+# #!/bin/bash
+# exec > /var/log/userdata.log 2>&1
+# set -ex
+
+# dnf update -y
+# dnf install -y httpd
+
+# systemctl enable --now httpd
+
+# echo "<h1>Hello World from $(hostname -f)</h1>" > /var/www/html/index.html
+# EOF
+# }
