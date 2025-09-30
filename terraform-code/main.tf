@@ -43,12 +43,12 @@ module "sg_presentation" {
   vpc_id  = module.vpc.vpc_id
   sg_name = "${var.project_name}-sg-presentation"
   ingress_rules = [
-    { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] },   # SSH
+    { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = ["14.161.19.182/32"] },   # SSH
     { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] },   # HTTP
     { from_port = 443, to_port = 443, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, # HTTPS
-    { from_port = 27017, to_port = 27017, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, # MongoDB
+    # { from_port = 27017, to_port = 27017, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, # MongoDB
     { from_port = 8000, to_port = 8000, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, # Backend
-    { from_port = 3000, to_port = 3000, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, # Frontend
+    # { from_port = 3000, to_port = 3000, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, # Frontend
     { from_port = -1, to_port = -1, protocol = "icmp", cidr_blocks = ["0.0.0.0/0"] }, # ICMP
   ]
 
@@ -62,6 +62,7 @@ module "sg_app" {
     { from_port = 8080, to_port = 8080, protocol = "tcp", security_groups = [module.sg_presentation.security_group_id] }, 
     { from_port = 22, to_port = 22, protocol = "tcp", security_groups = [module.sg_presentation.security_group_id] },     # SSH
     { from_port = 8000, to_port = 8000, protocol = "tcp", security_groups = [module.sg_presentation.security_group_id] }, # Backend
+    { from_port = 3000, to_port = 3000, protocol = "tcp", security_groups = [module.sg_presentation.security_group_id] },
   ]
 
 }
@@ -109,11 +110,24 @@ module "ec2_fe" {
   instance_ami       = "ami-0ca4d5db4872d0c28" # Amazon Linux 2 AMI (HVM), SSD Volume Type
   instance_type      = "t2.micro"
   key_name           = "tct-key-pair"
-  ec2_name           = "Public-EC2-FE"
+  ec2_name           = "Private-EC2-FE"
+  subnet_id          = module.vpc.private_subnet_app_ids[1]
+  security_group_ids = [module.sg_app.security_group_id]
+  # user_data          = templatefile("templates/user_data_fe.sh", { be_private_ip = module.ec2_be.private_ip })
+  user_data          = templatefile("templates/user_data_fe.sh", { be_private_ip = module.load_balancer.alb_dns_name })
+}
+
+module "ec2_bastion_host" {
+  
+  source             = "./modules/ec2/ec2"
+  instance_ami       = "ami-0ca4d5db4872d0c28" # Amazon Linux 2 AMI (HVM), SSD Volume Type
+  instance_type      = "t2.micro"
+  key_name           = "tct-key-pair"
+  ec2_name           = "Public-EC2-Bastion-Host"
   subnet_id          = module.vpc.public_subnet_ids[0]
   security_group_ids = [module.sg_presentation.security_group_id]
   # user_data          = templatefile("templates/user_data_fe.sh", { be_private_ip = module.ec2_be.private_ip })
-  user_data          = templatefile("templates/user_data_fe.sh", { be_private_ip = module.load_balancer.alb_dns_name })
+  # user_data          = templatefile("templates/user_data_fe.sh", { be_private_ip = module.load_balancer.alb_dns_name })
 }
 
 module "target_group_backend" {
